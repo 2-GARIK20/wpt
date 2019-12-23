@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Prefixed CSS Transition End event</title>
+<link rel="help" href="https://compat.spec.whatwg.org/#transition-event-handlers">
+
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<style>
+.baseStyle {
+  width: 100px;
+  transition: width 1ms;
+}
+
+.transition {
+  width: 200px;
+}
+</style>
+
+<body>
+
+<script src="resources/utils.js"></script>
+<script>
+'use strict';
+
+// We use promise_tests because we need an asynchronous test model with the
+// guarantee that one test will finish before another begins (since we are
+// dealing with event listeners).
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).width;
+
+  let receivedWebkitTransitionEnd = false;
+  addTestScopedEventHandler(t, div, 'onwebkittransitionend', () => {
+    receivedWebkitTransitionEnd = true;
+  });
+
+  div.classList.add('transition');
+  await waitForEventThenAnimationFrame(t, div, 'transitionend');
+  assert_true(receivedWebkitTransitionEnd,
+              'received onwebkittransitionend event');
+}, 'onwebkittransitionend event handler should trigger');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).width;
+
+  let receivedWebkitTransitionEnd = false;
+  addTestScopedEventHandler(t, div, 'onwebkittransitionend', () => {
+    receivedWebkitTransitionEnd = true;
+  });
+  addTestScopedEventHandler(t, div, 'ontransitionend', () => {});
+
+  div.classList.add('transition');
+  await waitForEventThenAnimationFrame(t, div, 'transitionend');
+  assert_false(receivedWebkitTransitionEnd,
+              'received onwebkittransitionend event');
+}, 'onwebkittransitionend event handler should not trigger if an unprefixed '
+    + 'version also exists');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).width;
+
+  let receivedWebkitTransitionEnd = false;
+  addTestScopedEventListener(t, div, 'webkitTransitionEnd', () => {
+    receivedWebkitTransitionEnd = true;
+  });
+
+  div.classList.add('transition');
+  await waitForEventThenAnimationFrame(t, div, 'ontransitionend');
+  assert_true(receivedWebkitTransitionEnd,
+              'received webkitTransitionEnd event');
+}, 'webkitTransitionEnd event listener should trigger');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).width;
+
+  let receivedWebkitTransitionEnd = false;
+  addTestScopedEventListener(t, div, 'webkitTransitionEnd', () => {
+    receivedWebkitTransitionEnd = true;
+  });
+  addTestScopedEventListener(t, div, 'transitionend', () => {});
+
+  div.classList.add('transition');
+  await waitForEventThenAnimationFrame(t, div, 'ontransitionend');
+  assert_false(receivedWebkitTransitionEnd,
+              'received webkitTransitionEnd event');
+}, 'webkitTransitionEnd event listener should not trigger if an unprefixed '
+    + 'version also exists');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).width;
+
+  // Deliberately lower-case, to test case-sensitivity.
+  let receivedWebkitTransitionEnd = false;
+  addTestScopedEventListener(t, div, 'webkittransitionend', () => {
+    receivedWebkitTransitionEnd = true;
+  });
+
+  div.classList.add('transition');
+  await waitForEventThenAnimationFrame(t, div, 'ontransitionend');
+  assert_false(receivedWebkitTransitionEnd,
+              'received webkitTransitionEnd event');
+}, 'webkitTransitionEnd event listener is case sensitive');
+</script>

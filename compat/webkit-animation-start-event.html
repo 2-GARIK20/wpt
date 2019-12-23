@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Prefixed CSS Animation start events</title>
+<link rel="help" href="https://compat.spec.whatwg.org/#animation-event-handlers">
+
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<style>
+@keyframes anim {}
+</style>
+
+<body>
+
+<script src="resources/utils.js"></script>
+<script>
+'use strict';
+
+// We use promise_tests because we need an asynchronous test model with the
+// guarantee that one test will finish before another begins (since we are
+// dealing with event listeners).
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).offsetTop;
+
+  let receivedWebkitAnimationStart = false;
+  addTestScopedEventHandler(t, div, 'onwebkitanimationstart', () => {
+    receivedWebkitAnimationStart = true;
+  });
+
+  div.style.animation = 'anim 1ms';
+  await waitForEventThenAnimationFrame(t, div, 'animationstart');
+  assert_true(receivedWebkitAnimationStart,
+              'received onwebkitanimationstart event');
+}, 'onwebkitanimationstart event handler should trigger');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).offsetTop;
+
+  let receivedWebkitAnimationStart = false;
+  addTestScopedEventHandler(t, div, 'onwebkitanimationstart', () => {
+    receivedWebkitAnimationStart = true;
+  });
+  addTestScopedEventHandler(t, div, 'onanimationstart', () => {});
+
+  div.style.animation = 'anim 1ms';
+  await waitForEventThenAnimationFrame(t, div, 'animationstart');
+  assert_false(receivedWebkitAnimationStart,
+               'received onwebkitanimationstart event');
+}, 'onwebkitanimationstart event handler should not trigger if an unprefixed '
+    + 'version also exists');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).offsetTop;
+
+  let receivedWebkitAnimationStart = false;
+  addTestScopedEventListener(t, div, 'webkitAnimationStart', () => {
+    receivedWebkitAnimationStart = true;
+  });
+
+  div.style.animation = 'anim 1ms';
+  await waitForEventThenAnimationFrame(t, div, 'onanimationstart');
+  assert_true(receivedWebkitAnimationStart, 'received webkitAnimationStart event');
+}, 'webkitAnimationStart event listener should trigger');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).offsetTop;
+
+  let receivedWebkitAnimationStart = false;
+  addTestScopedEventListener(t, div, 'webkitAnimationStart', () => {
+    receivedWebkitAnimationStart = true;
+  });
+  addTestScopedEventListener(t, div, 'animationstart', () => {});
+
+  div.style.animation = 'anim 1ms';
+  await waitForEventThenAnimationFrame(t, div, 'onanimationstart');
+  assert_false(receivedWebkitAnimationStart,
+              'received webkitAnimationStart event');
+}, 'webkitAnimationStart event listener should not trigger if an unprefixed '
+    + 'version also exists');
+
+promise_test(async t => {
+  const div = createDiv(t);
+  getComputedStyle(div).offsetTop;
+
+  // Deliberately lower-case, to test case-sensitivity.
+  let receivedWebkitAnimationStart = false;
+  addTestScopedEventListener(t, div, 'webkitanimationstart', () => {
+    receivedWebkitAnimationStart = true;
+  });
+
+  div.style.animation = 'anim 1ms';
+  await waitForEventThenAnimationFrame(t, div, 'onanimationstart');
+  assert_false(receivedWebkitAnimationStart,
+              'received webkitAnimationStart event');
+}, 'webkitAnimationStart event listener is case sensitive');
+</script>
